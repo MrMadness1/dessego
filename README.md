@@ -24,6 +24,7 @@ is every chance they'll drop support for PS3 Demon's Souls at some point.
 
 ## Requirements
 * [Go][2] 1.13+
+* Docker with Compose (recommended for server deployments)
 
 ## Installation
 ```bash
@@ -42,7 +43,46 @@ $ make build
 Usage of ./bin/dessego-linux-amd64:
   -seed
         Seed database tables with legacy data
+  -host string
+        Public host advertised to game clients (default "127.0.0.1")
+  -db string
+        SQLite database path (default "./db/dessego.db")
 ```
+
+The server can also be configured with environment variables:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DESSEGO_PUBLIC_HOST` | `127.0.0.1` | Hostname or IPv4 address advertised to game clients |
+| `DESSEGO_BOOTSTRAP_PORT` | `18000` | Bootstrap server TCP port |
+| `DESSEGO_US_PORT` | `18666` | US game server TCP port |
+| `DESSEGO_EU_PORT` | `18667` | EU game server TCP port |
+| `DESSEGO_JP_PORT` | `18668` | JP game server TCP port |
+| `DESSEGO_DB_PATH` | `./db/dessego.db` | SQLite database path |
+
+Command-line flags override the matching environment variables.
+
+## Docker Compose
+
+Copy `compose.example.yaml`, set `DESSEGO_PUBLIC_HOST` to the public hostname or
+IPv4 address that clients can reach, and start the service:
+
+```bash
+docker compose up -d --build
+```
+
+The example uses host networking because the bootstrap response advertises the
+game ports directly. It persists the SQLite database in the `dessego_data`
+volume and restarts the container unless it is explicitly stopped.
+
+Expose these ports to the host running the container:
+
+| Protocol | Port | Service |
+| --- | ---: | --- |
+| TCP | 18000 | Bootstrap |
+| TCP | 18666 | US game service |
+| TCP | 18667 | EU game service |
+| TCP | 18668 | JP game service |
 
 ## Connecting from Demon's Souls
 ### Native PS3

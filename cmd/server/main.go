@@ -16,8 +16,11 @@
 package main
 
 import (
+	"errors"
 	"flag"
+	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -36,31 +39,40 @@ import (
 )
 
 const (
-	// TODO: Make configurable
-	hostGame      = "127.0.0.1"
-	portBootstrap = "18000"
-	portUS        = "18666"
-	portEU        = "18667"
-	portJP        = "18668"
-
-	dbPath = "./db/dessego.db"
+	defaultHostGame      = "127.0.0.1"
+	defaultPortBootstrap = "18000"
+	defaultPortUS        = "18666"
+	defaultPortEU        = "18667"
+	defaultPortJP        = "18668"
+	defaultDBPath        = "./db/dessego.db"
 )
 
 var (
-	gameServers = map[string]string{
-		"US": portUS,
-		"EU": portEU,
-		"JP": portJP,
-	}
-
-	seed bool
+	hostGame      string
+	portBootstrap string
+	portUS        string
+	portEU        string
+	portJP        string
+	dbPath        string
+	seed          bool
 )
 
 func main() {
 	flag.BoolVar(&seed, "seed", false, "Seed database tables with legacy data")
+	flag.StringVar(&hostGame, "host", envOrDefault("DESSEGO_PUBLIC_HOST", defaultHostGame), "Public host advertised to game clients")
+	flag.StringVar(&portBootstrap, "bootstrap-port", envOrDefault("DESSEGO_BOOTSTRAP_PORT", defaultPortBootstrap), "Bootstrap server TCP port")
+	flag.StringVar(&portUS, "us-port", envOrDefault("DESSEGO_US_PORT", defaultPortUS), "US game server TCP port")
+	flag.StringVar(&portEU, "eu-port", envOrDefault("DESSEGO_EU_PORT", defaultPortEU), "EU game server TCP port")
+	flag.StringVar(&portJP, "jp-port", envOrDefault("DESSEGO_JP_PORT", defaultPortJP), "JP game server TCP port")
+	flag.StringVar(&dbPath, "db", envOrDefault("DESSEGO_DB_PATH", defaultDBPath), "SQLite database path")
 	flag.Parse()
 
 	l := zerolog.New(os.Stdout)
+	gameServers := map[string]string{
+		"US": portUS,
+		"EU": portEU,
+		"JP": portJP,
+	}
 
 	db, err := database.NewSQLite(dbPath)
 	if err != nil {
@@ -70,6 +82,7 @@ func main() {
 
 	// Track the servers, so we can close them down later.
 	servers := make([]io.Closer, 0, 4)
+	serverErrs := make(chan error, 4)
 
 	// Bootstrap server; used to allow Demon's Souls to configure it's network
 	// client.
@@ -82,8 +95,8 @@ func main() {
 
 	l.Info().Msg("bootstrap server listening on " + portBootstrap)
 	go func() {
-		if err = bs.Serve(); err != nil {
-			fatal(l, err)
+		if serveErr := bs.Serve(); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			serverErrs <- fmt.Errorf("bootstrap server: %w", serveErr)
 		}
 	}()
 
@@ -135,24 +148,34 @@ func main() {
 		servers = append(servers, gs)
 
 		l.Info().Msg(region + " game server listening on " + port)
-		go func() {
-			if err = gs.Serve(); err != nil {
-				fatal(l, err)
+		go func(region string) {
+			if serveErr := gs.Serve(); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+				serverErrs <- fmt.Errorf("%s game server: %w", region, serveErr)
 			}
-		}()
+		}(region)
 	}
 
 	sigChan := make(chan os.Signal, 2)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	<-sigChan
-
-	l.Info().Msg("shutting down servers...")
+	select {
+	case sig := <-sigChan:
+		l.Info().Str("signal", sig.String()).Msg("shutting down servers")
+	case serveErr := <-serverErrs:
+		fatal(l, serveErr)
+	}
 
 	for _, s := range servers {
 		if err = s.Close(); err != nil {
 			l.Error().Err(err).Msg("close server")
 		}
 	}
+}
+
+func envOrDefault(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return fallback
 }
 
 func fatal(l zerolog.Logger, err error) {

@@ -1,0 +1,7 @@
+.git
+.github
+bin
+db/*.db
+Dockerfile*
+compose*.yaml
+README.md

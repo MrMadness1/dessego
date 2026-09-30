@@ -1,0 +1,15 @@
+volumes:
+  dessego_data:
+
+services:
+  dessego:
+    container_name: dessego
+    build:
+      context: .
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      DESSEGO_PUBLIC_HOST: des.mgn.pub
+      DESSEGO_DB_PATH: /data/dessego.db
+    volumes:
+      - dessego_data:/data
