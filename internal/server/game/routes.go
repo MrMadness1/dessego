@@ -26,11 +26,11 @@ func (s *Server) routes() {
 	// System routes.
 	s.r.HandleFunc(
 		routePrefix+"/login.spd",
-		middleware.LogRequest(s.l, s.loginHandler()),
+		middleware.LogRequest(s.l, middleware.DiscardRequestBody(s.loginHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/getTimeMessage.spd",
-		middleware.LogRequest(s.l, s.timeMsgHandler()),
+		middleware.LogRequest(s.l, middleware.DiscardRequestBody(s.timeMsgHandler())),
 	)
 
 	// Character/Player routes.
