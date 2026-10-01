@@ -4,12 +4,69 @@
 package character
 
 import (
+	"context"
 	"database/sql"
+	"github.com/danmrichards/dessego/internal/service/msg"
+	"github.com/danmrichards/dessego/internal/service/replay"
+	"github.com/rs/zerolog"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+func TestSQLiteServicesReleaseRowsAfterScanFailure(t *testing.T) {
+	// Service constructors currently resolve DDL relative to the repository root.
+	original, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Clean(filepath.Join(original, "../../.."))
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(original)
+	db, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(1)
+	ms, err := msg.NewSQLiteService(db, zerolog.Nop())
+	if err != nil {
+		t.Fatal(err)
+	}
+	rs, err := replay.NewSQLiteService(db, zerolog.Nop())
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"message", "replay"} {
+		for _, id := range []string{"bad-a", "bad-b"} {
+			if _, err := db.Exec("INSERT INTO "+table+" (character_id, block_id, posx, legacy) VALUES (?, 60070, 'invalid-float', 0)", id); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if _, err := ms.NonCharacter("viewer", 60070, 10); err == nil {
+		t.Fatal("expected message scan error")
+	}
+	if inUse := db.Stats().InUse; inUse != 0 {
+		t.Fatalf("message query leaked %d connection(s)", inUse)
+	}
+	if _, err := rs.List(60070, 10, replay.NonLegacy); err == nil {
+		t.Fatal("expected replay scan error")
+	}
+	if inUse := db.Stats().InUse; inUse != 0 {
+		t.Fatalf("replay query leaked %d connection(s)", inUse)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := db.PingContext(ctx); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestSQLiteUpdatePlayerGrade(t *testing.T) {
 	db, err := sql.Open("sqlite3", ":memory:")

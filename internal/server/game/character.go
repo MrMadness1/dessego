@@ -146,6 +146,10 @@ func (s *Server) worldTendencyHandler() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		if ctr.MaxNum < 0 || ctr.MaxNum > maxRequestedRecords {
+			http.Error(w, "invalid record count", http.StatusBadRequest)
+			return
+		}
 
 		wts, err := s.cs.WorldTendency(ctr.MaxNum)
 		if err != nil {

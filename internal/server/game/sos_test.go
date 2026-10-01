@@ -14,7 +14,7 @@ import (
 
 type sosPlaintextDecrypter struct{}
 
-func (sosPlaintextDecrypter) Decrypt(data []byte) []byte { return data }
+func (sosPlaintextDecrypter) Decrypt(data []byte) ([]byte, error) { return data, nil }
 
 func TestGetSOSDiscoversAndRetainsSigns(t *testing.T) {
 	m := sos.NewManager(zerolog.Nop())

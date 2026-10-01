@@ -9,17 +9,15 @@ import (
 
 // Memory is an in-memory ghost manager.
 type Memory struct {
-	ghosts   map[string]*Ghost
-	ghostAge []string
-	l        zerolog.Logger
+	ghosts map[string]*Ghost
+	l      zerolog.Logger
 
 	sync.Mutex
 }
 
 // NewMemory returns a new ghost manager.
 //
-// It stores both a map of ghosts by character ID and also an ordered set of
-// ghosts by timestamp (oldest first).
+// Ghosts are indexed by character ID and expired directly from that map.
 func NewMemory(l zerolog.Logger) *Memory {
 	return &Memory{
 		ghosts: make(map[string]*Ghost),
@@ -33,7 +31,14 @@ func (m *Memory) Get(characterID string, blockID int32, n int) []*Ghost {
 	m.Lock()
 	defer m.Unlock()
 
-	g := make([]*Ghost, 0, n)
+	if n <= 0 {
+		return []*Ghost{}
+	}
+	capacity := len(m.ghosts)
+	if n < capacity {
+		capacity = n
+	}
+	g := make([]*Ghost, 0, capacity)
 	var i int
 	for _, mg := range m.ghosts {
 		if i == n {
@@ -55,18 +60,16 @@ func (m *Memory) ClearBefore(t time.Time) {
 	m.Lock()
 	defer m.Unlock()
 
-	for i, g := range m.ghostAge {
-		if !m.ghosts[g].timestamp.Before(t) {
+	for id, g := range m.ghosts {
+		if !g.timestamp.Before(t) {
 			continue
 		}
 
 		m.l.Debug().Msgf(
-			"deleting stale ghost for character: %q", m.ghosts[g].CharacterID,
+			"deleting stale ghost for character: %q", g.CharacterID,
 		)
 
-		// Clear the ghost from the map and ordered set.
-		delete(m.ghosts, g)
-		m.ghostAge = append(m.ghostAge[:i], m.ghostAge[i+1:]...)
+		delete(m.ghosts, id)
 	}
 }
 

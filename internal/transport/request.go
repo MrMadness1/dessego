@@ -13,7 +13,7 @@ import (
 // Decrypt returns a byte slice containing the decrypted contents of the given
 // input byte slice.
 type RequestDecrypter interface {
-	Decrypt([]byte) []byte
+	Decrypt([]byte) ([]byte, error)
 }
 
 // DecodeRequest decodes the bytes from a request body into the target, v.
@@ -25,7 +25,10 @@ func DecodeRequest(rd RequestDecrypter, data []byte, v interface{}) error {
 
 	// Demon's Souls sends it's request body as an AES encrypted version of
 	// a standard HTTP form POST.
-	req := rd.Decrypt(data)
+	req, err := rd.Decrypt(data)
+	if err != nil {
+		return fmt.Errorf("decrypt request: %w", err)
+	}
 
 	// Can now use the body as a normal HTTP form.
 	vals, err := url.ParseQuery(string(req))

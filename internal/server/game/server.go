@@ -10,6 +10,9 @@ import (
 	"github.com/danmrichards/dessego/internal/transport"
 )
 
+// maxRequestedRecords prevents client counts from driving unbounded allocations.
+const maxRequestedRecords = 1024
+
 // Server is a gamestate server.
 type Server struct {
 	nl net.Listener

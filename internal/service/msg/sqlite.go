@@ -70,6 +70,7 @@ func (s *SQLiteService) Character(playerID string, blockID int32, n int) (bms []
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	var rows *sql.Rows
 	rows, err = stmt.Query(playerID, blockID, 0, n)
@@ -77,6 +78,7 @@ func (s *SQLiteService) Character(playerID string, blockID int32, n int) (bms []
 		return nil, fmt.Errorf("query rows: %w", err)
 	}
 
+	defer rows.Close()
 	for rows.Next() {
 		var bm BloodMsg
 		if err = rows.Scan(
@@ -101,6 +103,9 @@ func (s *SQLiteService) Character(playerID string, blockID int32, n int) (bms []
 		bms = append(bms, bm)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
 	return bms, nil
 }
 
@@ -122,6 +127,7 @@ func (s *SQLiteService) NonCharacter(playerID string, blockID int32, n int) (bms
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	var rows *sql.Rows
 	rows, err = stmt.Query(playerID, blockID, 0, n)
@@ -129,6 +135,7 @@ func (s *SQLiteService) NonCharacter(playerID string, blockID int32, n int) (bms
 		return nil, fmt.Errorf("query rows: %w", err)
 	}
 
+	defer rows.Close()
 	for rows.Next() {
 		var bm BloodMsg
 		if err = rows.Scan(
@@ -153,6 +160,9 @@ func (s *SQLiteService) NonCharacter(playerID string, blockID int32, n int) (bms
 		bms = append(bms, bm)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
 	return bms, nil
 }
 
@@ -172,6 +182,7 @@ func (s *SQLiteService) Legacy(blockID int32, n int) (bms []BloodMsg, err error)
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	var rows *sql.Rows
 	rows, err = stmt.Query(blockID, 1, n)
@@ -179,6 +190,7 @@ func (s *SQLiteService) Legacy(blockID int32, n int) (bms []BloodMsg, err error)
 		return nil, fmt.Errorf("query rows: %w", err)
 	}
 
+	defer rows.Close()
 	for rows.Next() {
 		var bm BloodMsg
 		if err = rows.Scan(
@@ -203,6 +215,9 @@ func (s *SQLiteService) Legacy(blockID int32, n int) (bms []BloodMsg, err error)
 		bms = append(bms, bm)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
 	return bms, nil
 }
 
@@ -226,6 +241,7 @@ func (s *SQLiteService) Add(bm BloodMsg) error {
 	if err != nil {
 		return fmt.Errorf("prepare insert: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(
 		bm.CharacterID,
@@ -254,6 +270,7 @@ func (s *SQLiteService) Delete(id int) error {
 	if err != nil {
 		return fmt.Errorf("prepare query: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(id); err != nil {
 		return fmt.Errorf("delete message: %w", err)
@@ -270,6 +287,7 @@ func (s *SQLiteService) Get(id int) (*BloodMsg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	bm := &BloodMsg{}
 	if err = stmt.QueryRow(id).Scan(
@@ -302,6 +320,7 @@ func (s *SQLiteService) UpdateRating(id int) error {
 	if err != nil {
 		return fmt.Errorf("prepare query: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(id); err != nil {
 		return fmt.Errorf("update message rating: %w", err)
@@ -334,6 +353,7 @@ func (s *SQLiteService) initTable() error {
 	if err != nil {
 		return fmt.Errorf("prepare DDL: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(); err != nil {
 		return fmt.Errorf("init table: %w", err)
@@ -359,6 +379,8 @@ func (s *SQLiteService) doSeed() error {
 		return fmt.Errorf("db tx: %w", err)
 	}
 
+	defer tx.Rollback()
+
 	buf := make([]byte, 512)
 	for {
 		n, err := io.ReadFull(r, buf[:4])
@@ -370,12 +392,13 @@ func (s *SQLiteService) doSeed() error {
 
 		// Message length.
 		ml := int(binary.LittleEndian.Uint32(buf[:n]))
+		if ml < 4 || ml > len(buf) {
+			return fmt.Errorf("invalid seed record length: %d", ml)
+		}
 
 		// Message body.
 		n, err = io.ReadFull(r, buf[:ml])
-		if err == io.EOF {
-			break
-		} else if err != nil {
+		if err != nil {
 			return err
 		}
 
@@ -414,6 +437,7 @@ func (s *SQLiteService) saveMsg(tx sqlPreparer, msg *BloodMsg) error {
 	if err != nil {
 		return fmt.Errorf("prepare insert: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(
 		msg.ID,

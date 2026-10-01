@@ -36,104 +36,104 @@ func (s *Server) routes() {
 	// Character/Player routes.
 	s.r.HandleFunc(
 		routePrefix+"/initializeCharacter.spd",
-		middleware.LogRequest(s.l, s.initCharacterHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.initCharacterHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/getQWCData.spd",
-		middleware.LogRequest(s.l, s.worldTendencyHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.worldTendencyHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/addQWCData.spd",
-		middleware.LogRequest(s.l, s.addWorldTendencyHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.addWorldTendencyHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/getMultiPlayGrade.spd",
-		middleware.LogRequest(s.l, s.characterMPGradeHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.characterMPGradeHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/getBloodMessageGrade.spd",
-		middleware.LogRequest(s.l, s.characterBloodMsgGradeHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.characterBloodMsgGradeHandler())),
 	)
 
 	// Ghost routes.
 	s.r.HandleFunc(
 		routePrefix+"/getWanderingGhost.spd",
-		middleware.LogRequest(s.l, s.getGhostHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.getGhostHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/setWanderingGhost.spd",
-		middleware.LogRequest(s.l, s.setGhostHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.setGhostHandler())),
 	)
 
 	// Blood message routes.
 	s.r.HandleFunc(
 		routePrefix+"/getBloodMessage.spd",
-		middleware.LogRequest(s.l, s.getBloodMsgHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.getBloodMsgHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/addBloodMessage.spd",
-		middleware.LogRequest(s.l, s.addBloodMsgHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.addBloodMsgHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/deleteBloodMessage.spd",
-		middleware.LogRequest(s.l, s.deleteBloodMsgHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.deleteBloodMsgHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/updateBloodMessageGrade.spd",
-		middleware.LogRequest(s.l, s.updateBloodMsgGradeHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.updateBloodMsgGradeHandler())),
 	)
 
 	// Replay routes.
 	s.r.HandleFunc(
 		routePrefix+"/getReplayList.spd",
-		middleware.LogRequest(s.l, s.replayListHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.replayListHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/getReplayData.spd",
-		middleware.LogRequest(s.l, s.getReplayDataHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.getReplayDataHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/addReplayData.spd",
-		middleware.LogRequest(s.l, s.addReplayDataHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.addReplayDataHandler())),
 	)
 
 	// SOS routes.
 	s.r.HandleFunc(
 		routePrefix+"/getSosData.spd",
-		middleware.LogRequest(s.l, s.getSosDataHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.getSosDataHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/addSosData.spd",
-		middleware.LogRequest(s.l, s.addSosDataHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.addSosDataHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/checkSosData.spd",
-		middleware.LogRequest(s.l, s.checkSosDataHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.checkSosDataHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/summonOtherCharacter.spd",
-		middleware.LogRequest(s.l, s.summonCharacterHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.summonCharacterHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/summonBlackGhost.spd",
-		middleware.LogRequest(s.l, s.summonBlackGhostHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.summonBlackGhostHandler())),
 	)
 
 	// Multiplayer routes.
 	s.r.HandleFunc(
 		routePrefix+"/outOfBlock.spd",
-		middleware.LogRequest(s.l, s.outOfBlockHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.outOfBlockHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/initializeMultiPlay.spd",
-		middleware.LogRequest(s.l, s.initMultiplayHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.initMultiplayHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/finalizeMultiPlay.spd",
-		middleware.LogRequest(s.l, s.finaliseMultiplayHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.finaliseMultiplayHandler())),
 	)
 	s.r.HandleFunc(
 		routePrefix+"/updateOtherPlayerGrade.spd",
-		middleware.LogRequest(s.l, s.updateOtherPlayerGradeHandler()),
+		middleware.LogRequest(s.l, middleware.LimitRequestBody(s.updateOtherPlayerGradeHandler())),
 	)
 }
