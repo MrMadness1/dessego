@@ -51,8 +51,7 @@ for the game destination in manual host overrides.
 1. Open **Settings → Network Settings → Internet Connection Settings**.
 2. Choose the custom setup path, retain your normal addressing settings, and
    select manual DNS.
-3. Enter **137.220.35.216** as Primary DNS. This field requires a numeric IP:
-   do not enter `dns.mgn.pub`, a URL, or an `IP:port` value.
+3. Set **Primary DNS = 137.220.35.216**.
 4. Do not configure an unrelated public resolver as a fallback and assume it
    will provide the preservation overrides. Ask the operator for a supported
    secondary resolver if required.
@@ -66,8 +65,9 @@ summoning eligibility when testing multiplayer.
 
 1. Create/open the game's custom configuration and its Network settings.
 2. Set **Network Status = Connected** and **PSN Status = RPCN**.
-3. Set DNS to **137.220.35.216** for MGN's game-service overrides. Remove
-   conflicting old IP/Host Switch entries when testing DNS-based discovery.
+3. Set **DNS = 137.220.35.216** and leave **IP/Hosts switches empty**.
+   MGN DNS resolves the game service names; manual game-server IP overrides
+   are not needed for this verified setup.
 4. Open RPCS3's RPCN account/server manager (network-services menu or RPCN
    toolbar entry, depending on your build).
 5. Add/select the MGN server at **rpcn.mgn.pub** and create or select an account
