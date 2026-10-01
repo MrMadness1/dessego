@@ -131,7 +131,7 @@ func (s *Server) getSosDataHandler() http.HandlerFunc {
 			unknown = make([]*sos.SOS, 0, gsr.SOSNum)
 		)
 
-		for _, bs := range s.sos.List(blockID, gsr.SOSNum) {
+		for _, bs := range s.sos.List(blockID, gsr.MaxSOSNum) {
 			if inSosList(strconv.FormatUint(uint64(bs.ID), 10), sl) {
 				known = append(known, bs.ID)
 			} else {
