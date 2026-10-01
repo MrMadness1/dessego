@@ -69,6 +69,7 @@ func (s *SQLiteService) List(blockID int32, n int, legacy LegacyType) (rs []Repl
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	var rows *sql.Rows
 	rows, err = stmt.Query(blockID, legacy, n)
@@ -76,6 +77,7 @@ func (s *SQLiteService) List(blockID int32, n int, legacy LegacyType) (rs []Repl
 		return nil, fmt.Errorf("query rows: %w", err)
 	}
 
+	defer rows.Close()
 	for rows.Next() {
 		var r Replay
 		if err = rows.Scan(
@@ -100,6 +102,9 @@ func (s *SQLiteService) List(blockID int32, n int, legacy LegacyType) (rs []Repl
 		rs = append(rs, r)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
 	return rs, nil
 }
 
@@ -114,6 +119,7 @@ func (s *SQLiteService) Get(id uint32) (r *Replay, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	r = &Replay{}
 	if err = stmt.QueryRow(id).Scan(
@@ -167,6 +173,7 @@ func (s *SQLiteService) initTable() error {
 	if err != nil {
 		return fmt.Errorf("prepare DDL: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(); err != nil {
 		return fmt.Errorf("init table: %w", err)
@@ -192,6 +199,8 @@ func (s *SQLiteService) doSeed() error {
 		return fmt.Errorf("db tx: %w", err)
 	}
 
+	defer tx.Rollback()
+
 	buf := make([]byte, 2048)
 	for {
 		n, err := io.ReadFull(r, buf[:4])
@@ -203,12 +212,13 @@ func (s *SQLiteService) doSeed() error {
 
 		// Replay length.
 		ml := int(binary.LittleEndian.Uint32(buf[:n]))
+		if ml < 4 || ml > len(buf) {
+			return fmt.Errorf("invalid seed record length: %d", ml)
+		}
 
 		// Replay body.
 		n, err = io.ReadFull(r, buf[:ml])
-		if err == io.EOF {
-			break
-		} else if err != nil {
+		if err != nil {
 			return err
 		}
 
@@ -285,6 +295,7 @@ func (s *SQLiteService) saveReplay(tx sqlPreparer, r *Replay) error {
 	if err != nil {
 		return fmt.Errorf("prepare insert: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(vals...); err != nil {
 		return fmt.Errorf("save replay: %w", err)

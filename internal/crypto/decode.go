@@ -29,7 +29,10 @@ func NewDecrypter(key string) (d *Decrypter, err error) {
 
 // Decrypt returns a byte slice containing the decrypted contents of the AES
 // encrypted enc.
-func (d *Decrypter) Decrypt(enc []byte) []byte {
+func (d *Decrypter) Decrypt(enc []byte) ([]byte, error) {
+	if len(enc) < 2*aes.BlockSize || (len(enc)-aes.BlockSize)%aes.BlockSize != 0 {
+		return nil, fmt.Errorf("invalid encrypted request length")
+	}
 	// Block-chain mode decrypter, pulling out the initialisation vector
 	// (IV) from the body.
 	cbc := cipher.NewCBCDecrypter(d.c, enc[:aes.BlockSize])
@@ -40,7 +43,15 @@ func (d *Decrypter) Decrypt(enc []byte) []byte {
 
 	// Trim the trailing characters.
 	trim := int(dec[len(dec)-1])
+	if trim < 1 || trim > aes.BlockSize || trim > len(dec) {
+		return nil, fmt.Errorf("invalid request padding")
+	}
+	for _, b := range dec[len(dec)-trim:] {
+		if int(b) != trim {
+			return nil, fmt.Errorf("invalid request padding")
+		}
+	}
 	dec = dec[:len(dec)-trim]
 
-	return dec
+	return dec, nil
 }

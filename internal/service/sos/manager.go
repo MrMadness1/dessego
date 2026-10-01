@@ -30,10 +30,10 @@ type Manager struct {
 // NewManager returns an instantiated SOS manager.
 func NewManager(l zerolog.Logger) *Manager {
 	return &Manager{
-		active: make(map[string]*SOS),
+		active:  make(map[string]*SOS),
 		pending: make(map[string]string),
-		monks: make(map[string]string),
-		l:      l,
+		monks:   make(map[string]string),
+		l:       l,
 	}
 }
 
@@ -41,6 +41,9 @@ func NewManager(l zerolog.Logger) *Manager {
 func (m *Manager) List(blockID int32, n int) []*SOS {
 	m.Lock()
 	defer m.Unlock()
+	if n <= 0 {
+		return []*SOS{}
+	}
 
 	var (
 		found int
@@ -50,6 +53,8 @@ func (m *Manager) List(blockID int32, n int) []*SOS {
 		if a.Updated.Add(maxSOSAge).Before(time.Now()) {
 			m.l.Info().Msgf("deleted SOS %d due to inactivity", a.ID)
 			delete(m.active, cid)
+			delete(m.pending, cid)
+			delete(m.monks, cid)
 			continue
 		} else if a.BlockID != blockID {
 			// Only include SOS for the given block.
@@ -82,6 +87,8 @@ func (m *Manager) Delete(characterID string) {
 	defer m.Unlock()
 
 	delete(m.active, characterID)
+	delete(m.pending, characterID)
+	delete(m.monks, characterID)
 }
 
 // Check checks for a matching player to fulfill an SOS and returns the ID
@@ -91,6 +98,10 @@ func (m *Manager) Check(characterID string) string {
 	defer m.Unlock()
 
 	if _, ok := m.active[characterID]; ok {
+		if m.active[characterID].Updated.Add(maxSOSAge).Before(time.Now()) {
+			delete(m.pending, characterID)
+			delete(m.monks, characterID)
+		}
 		m.active[characterID].Updated = time.Now()
 	}
 
@@ -120,6 +131,15 @@ func (m *Manager) Summon(id int32, room string) bool {
 
 	for _, a := range m.active {
 		if a.ID == id {
+			if a.Updated.Add(maxSOSAge).Before(time.Now()) || room == "" {
+				return false
+			}
+			if _, ok := m.monks[a.CharacterID]; ok {
+				return false
+			}
+			if current, ok := m.pending[a.CharacterID]; ok {
+				return current == room
+			}
 			m.pending[a.CharacterID] = room
 			m.l.Info().Msgf(
 				"added pending summon for character %q in room %q",
@@ -139,7 +159,16 @@ func (m *Manager) Monk(room string) bool {
 	defer m.Unlock()
 
 	for _, a := range m.active {
-		if monkBlock(a.BlockID) {
+		if monkBlock(a.BlockID) && !a.Updated.Add(maxSOSAge).Before(time.Now()) && room != "" {
+			if _, ok := m.pending[a.CharacterID]; ok {
+				continue
+			}
+			if current, ok := m.monks[a.CharacterID]; ok {
+				if current == room {
+					return true
+				}
+				continue
+			}
 			m.monks[a.CharacterID] = room
 			m.l.Info().Msgf("added pending request for monk in room %q", room)
 			return true

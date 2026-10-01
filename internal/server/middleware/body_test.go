@@ -92,3 +92,28 @@ func (b *incompleteBody) Read(p []byte) (int, error) {
 	return n, err
 }
 func (b *incompleteBody) Close() error { return nil }
+
+func TestLimitRequestBody(t *testing.T) {
+	for _, tc := range []struct{ size, status int }{{32, 200}, {1 << 20, 200}, {(1 << 20) + 1, 413}} {
+		called := false
+		h := LimitRequestBody(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			called = true
+			b, err := io.ReadAll(r.Body)
+			if err != nil || len(b) != tc.size {
+				t.Fatalf("body length %d: %v", len(b), err)
+			}
+		}))
+		w := httptest.NewRecorder()
+		h(w, httptest.NewRequest("POST", "/", bytes.NewReader(make([]byte, tc.size))))
+		if w.Code != tc.status || called != (tc.status == 200) {
+			t.Fatalf("size %d: status %d called %v", tc.size, w.Code, called)
+		}
+	}
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("POST", "/", nil)
+	r.Body = &incompleteBody{Reader: bytes.NewReader([]byte("short")), incomplete: true}
+	LimitRequestBody(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { t.Fatal("accepted incomplete body") }))(w, r)
+	if w.Code != 400 {
+		t.Fatalf("incomplete body status %d", w.Code)
+	}
+}

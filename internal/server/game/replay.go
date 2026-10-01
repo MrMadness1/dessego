@@ -51,7 +51,7 @@ func (a addReplayDataReq) ToReplay() *replay.Replay {
 
 // swagger:operation POST /cgi-bin/getReplayList.spd replayListHandler
 //
-// Returns a list of available replays for an area of the game
+// # Returns a list of available replays for an area of the game
 //
 // ---
 // summary: List replays
@@ -62,16 +62,18 @@ func (a addReplayDataReq) ToReplay() *replay.Replay {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/replayListReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) replayListHandler() http.HandlerFunc {
 	// swagger:model replayListReq
 	type replayListReq struct {
@@ -93,6 +95,10 @@ func (s *Server) replayListHandler() http.HandlerFunc {
 		if err = transport.DecodeRequest(s.rd, b, &rlr); err != nil {
 			s.l.Err(err).Msg("")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if rlr.ReplayNum < 0 || rlr.ReplayNum > maxRequestedRecords {
+			http.Error(w, "invalid record count", http.StatusBadRequest)
 			return
 		}
 
@@ -145,7 +151,7 @@ func (s *Server) replayListHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/getReplayData.spd getReplayDataHandler
 //
-// Returns a single replay's data
+// # Returns a single replay's data
 //
 // ---
 // summary: Get replay data
@@ -156,16 +162,18 @@ func (s *Server) replayListHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/replayDataReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) getReplayDataHandler() http.HandlerFunc {
 	// swagger:model replayDataReq
 	type replayDataReq struct {
@@ -193,9 +201,15 @@ func (s *Server) getReplayDataHandler() http.HandlerFunc {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			s.l.Warn().Msgf("no replay exists with ID: %d", rdr.GhostID)
+			http.Error(w, "replay not found", http.StatusNotFound)
+			return
 		case err != nil:
 			s.l.Err(err).Msg("")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if rp == nil {
+			http.Error(w, "missing replay data", http.StatusInternalServerError)
 			return
 		}
 
@@ -220,7 +234,7 @@ func (s *Server) getReplayDataHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/addReplayData.spd addReplayDataHandler
 //
-// Adds replay data for the given character
+// # Adds replay data for the given character
 //
 // ---
 // summary: Add replay data
@@ -231,16 +245,18 @@ func (s *Server) getReplayDataHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/addReplayDataReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) addReplayDataHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)

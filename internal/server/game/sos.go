@@ -62,7 +62,7 @@ func (a addSosDataReq) ToSos() *sos.SOS {
 
 // swagger:operation POST /cgi-bin/getSosData.spd getSosDataHandler
 //
-// Returns a list of SOS messages for a given area of the game
+// # Returns a list of SOS messages for a given area of the game
 //
 // ---
 // summary: Get SOS message
@@ -73,16 +73,18 @@ func (a addSosDataReq) ToSos() *sos.SOS {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/getSosDataReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) getSosDataHandler() http.HandlerFunc {
 	// swagger:model getSosDataReq
 	type getSosDataReq struct {
@@ -114,6 +116,10 @@ func (s *Server) getSosDataHandler() http.HandlerFunc {
 		if err = transport.DecodeRequest(s.rd, b, &gsr); err != nil {
 			s.l.Err(err).Msg("")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if gsr.MaxSOSNum < 0 || gsr.MaxSOSNum > maxRequestedRecords || gsr.SOSNum < 0 || gsr.SOSNum > maxRequestedRecords {
+			http.Error(w, "invalid record count", http.StatusBadRequest)
 			return
 		}
 
@@ -165,7 +171,7 @@ func (s *Server) getSosDataHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/addSosData.spd addSosDataHandler
 //
-// Adds an SOS message for a given character
+// # Adds an SOS message for a given character
 //
 // ---
 // summary: Add SOS message
@@ -176,16 +182,18 @@ func (s *Server) getSosDataHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/addSosDataReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) addSosDataHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
@@ -243,16 +251,18 @@ func (s *Server) addSosDataHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/checkSosDataReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) checkSosDataHandler() http.HandlerFunc {
 	// swagger:model checkSosDataReq
 	type checkSosDataReq struct {
@@ -307,16 +317,18 @@ func (s *Server) checkSosDataHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/summonOtherCharacterReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) summonCharacterHandler() http.HandlerFunc {
 	// swagger:model summonOtherCharacterReq
 	type summonOtherCharacterReq struct {
@@ -388,16 +400,18 @@ func (s *Server) summonCharacterHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/summonBlackGhostReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) summonBlackGhostHandler() http.HandlerFunc {
 	// swagger:model summonBlackGhostReq
 	type summonBlackGhostReq struct {

@@ -22,7 +22,7 @@ func TestDecrypter_Decrypt(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if dec := d.Decrypt(enc); !reflect.DeepEqual(plain, dec) {
+	if dec, err := d.Decrypt(enc); err != nil || !reflect.DeepEqual(plain, dec) {
 		t.Fatalf("expected %q got %q", plain, dec)
 	}
 }
@@ -32,10 +32,7 @@ func testEnc(plain []byte) ([]byte, error) {
 	// next whole block. For an example of such padding, see
 	// https://tools.ietf.org/html/rfc5246#section-6.2.3.2. Here we'll
 	// assume that the plaintext is already of the correct length.
-	bl := len(plain)
-	for bl%aes.BlockSize != 0 {
-		bl++
-	}
+	bl := (len(plain)/aes.BlockSize + 1) * aes.BlockSize
 
 	// Padding delta.
 	d := bl - len(plain)
@@ -60,4 +57,36 @@ func testEnc(plain []byte) ([]byte, error) {
 	mode.CryptBlocks(enc[aes.BlockSize:], plain)
 
 	return enc, nil
+}
+
+func TestDecryptRejectsMalformedRequests(t *testing.T) {
+	d, _ := NewDecrypter(DefaultAESKey)
+	for n := 0; n < 65; n++ {
+		if n >= 32 && (n-16)%16 == 0 {
+			continue
+		}
+		if _, err := d.Decrypt(make([]byte, n)); err == nil {
+			t.Fatalf("accepted length %d", n)
+		}
+	}
+	block, _ := aes.NewCipher([]byte(DefaultAESKey))
+	for _, pad := range []byte{0, 17, 255, 2} {
+		plain := make([]byte, 16)
+		plain[15] = pad
+		enc := make([]byte, 32)
+		cipher.NewCBCEncrypter(block, enc[:16]).CryptBlocks(enc[16:], plain)
+		if _, err := d.Decrypt(enc); err == nil {
+			t.Fatalf("accepted invalid padding %d", pad)
+		}
+	}
+	for _, plain := range [][]byte{nil, []byte("1234567890123456"), []byte("a")} {
+		enc, err := testEnc(plain)
+		if err != nil {
+			t.Fatal(err)
+		}
+		dec, err := d.Decrypt(enc)
+		if err != nil || string(dec) != string(plain) {
+			t.Fatalf("valid plaintext: %q, %v", dec, err)
+		}
+	}
 }

@@ -35,11 +35,13 @@ const (
 //   - X angle
 //   - Y angle
 //   - Z angle
+//
 // Metadata 		= 16 bytes (each element at 4 bytes each)
-//	 - Message ID
+//   - Message ID
 //   - Main message ID
 //   - Add Message Cate ID (?)
 //   - Rating
+//
 // Data 			= n bytes (terminated by a zero byte)
 type Replay struct {
 	ID           uint32
@@ -65,7 +67,15 @@ func NewReplayFromBytes(b []byte) (r *Replay, err error) {
 	}
 
 	if len(b) < 4 {
-		return nil, nil
+		return nil, fmt.Errorf("truncated replay")
+	}
+
+	end := bytes.IndexByte(b[4:], 0)
+	if end < 0 || len(b) < 4+end+1+40+1 {
+		return nil, fmt.Errorf("truncated replay")
+	}
+	if bytes.IndexByte(b[4+end+1+40:], 0) < 0 {
+		return nil, fmt.Errorf("unterminated replay")
 	}
 
 	// Message ID.

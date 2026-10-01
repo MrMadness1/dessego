@@ -25,8 +25,9 @@ import (
 //   - X angle
 //   - Y angle
 //   - Z angle
+//
 // Metadata 		= 16 bytes (each element at 4 bytes each)
-//	 - Message ID
+//   - Message ID
 //   - Main message ID
 //   - Add Message Cate ID (?)
 //   - Rating
@@ -54,7 +55,12 @@ func NewBloodMsgFromBytes(b []byte) (bm *BloodMsg, err error) {
 	}
 
 	if len(b) < 4 {
-		return nil, nil
+		return nil, fmt.Errorf("truncated blood message")
+	}
+
+	end := bytes.IndexByte(b[4:], 0)
+	if end < 0 || len(b) < 4+end+1+44 {
+		return nil, fmt.Errorf("truncated blood message")
 	}
 
 	// Message ID.

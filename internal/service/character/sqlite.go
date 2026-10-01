@@ -35,6 +35,7 @@ func (s *SQLiteService) EnsureCreate(id string) error {
 	if err != nil {
 		return fmt.Errorf("prepare insert: %w", err)
 	}
+	defer stmt.Close()
 	if _, err = stmt.Exec(id); err != nil {
 		return fmt.Errorf("create character: %w", err)
 	}
@@ -62,6 +63,7 @@ func (s *SQLiteService) WorldTendency(n int) (wts []WorldTendency, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	var rows *sql.Rows
 	rows, err = stmt.Query(n)
@@ -69,6 +71,7 @@ func (s *SQLiteService) WorldTendency(n int) (wts []WorldTendency, err error) {
 		return nil, fmt.Errorf("query rows: %w", err)
 	}
 
+	defer rows.Close()
 	for rows.Next() {
 		var wt WorldTendency
 		if err = rows.Scan(
@@ -86,6 +89,9 @@ func (s *SQLiteService) WorldTendency(n int) (wts []WorldTendency, err error) {
 		wts = append(wts, wt)
 	}
 
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
 	return wts, nil
 }
 
@@ -115,6 +121,7 @@ func (s *SQLiteService) SetTendency(id string, wt WorldTendency) error {
 	if err != nil {
 		return fmt.Errorf("prepare update: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err := stmt.Exec(
 		id,
@@ -142,6 +149,7 @@ func (s *SQLiteService) Stats(id string) (*Stats, error) {
 	if err != nil {
 		return nil, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	st := &Stats{}
 	if err = stmt.QueryRow(id).Scan(
@@ -162,6 +170,7 @@ func (s *SQLiteService) MsgRating(id string) (mr int, err error) {
 	if err != nil {
 		return 0, fmt.Errorf("prepare select: %w", err)
 	}
+	defer stmt.Close()
 
 	if err = stmt.QueryRow(id).Scan(&mr); err != nil {
 		return 0, fmt.Errorf("query row: %w", err)
@@ -179,6 +188,7 @@ func (s *SQLiteService) UpdateMsgRating(id string) error {
 	if err != nil {
 		return fmt.Errorf("prepare query: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(id); err != nil {
 		return fmt.Errorf("update message rating: %w", err)
@@ -196,6 +206,7 @@ func (s *SQLiteService) InitMultiplayer(id string) error {
 	if err != nil {
 		return fmt.Errorf("prepare query: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(id); err != nil {
 		return fmt.Errorf("update message rating: %w", err)
@@ -246,6 +257,7 @@ func (s *SQLiteService) initTable(table string) error {
 	if err != nil {
 		return fmt.Errorf("prepare DDL: %w", err)
 	}
+	defer stmt.Close()
 
 	if _, err = stmt.Exec(); err != nil {
 		return fmt.Errorf("init table: %w", err)

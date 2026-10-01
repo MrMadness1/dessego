@@ -32,3 +32,15 @@ func TestNewBloodMsgFromBytes(t *testing.T) {
 		t.Fatalf("expected: %+v\ngot: %+v", exp, bm)
 	}
 }
+
+func TestBloodMessageParserRejectsTruncation(t *testing.T) {
+	data := (BloodMsg{CharacterID: "test", AngX: 1, AngZ: 3}).Bytes()
+	for n := 0; n < len(data); n++ {
+		if _, err := NewBloodMsgFromBytes(data[:n]); err == nil {
+			t.Fatalf("accepted truncation %d", n)
+		}
+	}
+	if _, err := NewBloodMsgFromBytes([]byte("no terminator")); err == nil {
+		t.Fatal("accepted missing terminator")
+	}
+}

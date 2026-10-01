@@ -1,6 +1,7 @@
 package ghost
 
 import (
+	"github.com/rs/zerolog"
 	"reflect"
 	"testing"
 	"time"
@@ -17,7 +18,6 @@ func TestMemory_Get(t *testing.T) {
 				timestamp:   gt,
 			},
 		},
-		ghostAge: []string{"test234"},
 	}
 
 	tcs := []struct {
@@ -80,7 +80,6 @@ func TestMemory_ClearBefore(t *testing.T) {
 				timestamp:   gt.Add(-30 * time.Second),
 			},
 		},
-		ghostAge: []string{"test456", "test678", "test234"},
 	}
 
 	gm.ClearBefore(gt.Add(-35 * time.Second))
@@ -97,12 +96,30 @@ func TestMemory_ClearBefore(t *testing.T) {
 			timestamp:   gt.Add(-30 * time.Second),
 		},
 	}
-	expGhostAge := []string{"test678", "test234"}
 
 	if !reflect.DeepEqual(expGhosts, gm.ghosts) {
 		t.Fatalf("expected %d ghosts got %d", len(expGhosts), len(gm.ghosts))
 	}
-	if !reflect.DeepEqual(expGhostAge, gm.ghostAge) {
-		t.Fatalf("expected %d ghost ages got %d", len(expGhosts), len(gm.ghosts))
+}
+
+func TestMemoryExpiresGhostsThroughPublicSet(t *testing.T) {
+	gm := NewMemory(zerolog.Nop())
+	now := time.Now()
+	for _, id := range []string{"old-a", "old-b", "fresh"} {
+		g := NewGhost(123, id, nil)
+		if id != "fresh" {
+			g.timestamp = now.Add(-time.Hour)
+		}
+		gm.Set(id, g)
+	}
+	gm.ClearBefore(now.Add(-30 * time.Second))
+	if got := gm.Get("viewer", 123, 10); len(got) != 1 || got[0].CharacterID != "fresh" {
+		t.Fatalf("ghost cleanup: %v", got)
+	}
+	gm.ClearBefore(now.Add(-30 * time.Second))
+	for _, n := range []int{-1, 0} {
+		if len(gm.Get("viewer", 123, n)) != 0 {
+			t.Fatal("nonpositive count returned ghosts")
+		}
 	}
 }
