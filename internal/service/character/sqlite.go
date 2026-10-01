@@ -206,15 +206,19 @@ func (s *SQLiteService) InitMultiplayer(id string) error {
 
 // UpdatePlayerGrade updates the given player with the given grade.
 func (s *SQLiteService) UpdatePlayerGrade(id string, grade MultiplayerGrade) error {
-	stmt, err := s.db.Prepare(
-		`UPDATE character SET ? = ? + 1 WHERE id = ?`,
-	)
-	if err != nil {
-		return fmt.Errorf("prepare query: %w", err)
+	// SQL parameters represent values, not column names. Only known grade
+	// constants may select a column; a session without a rating is a no-op.
+	switch grade {
+	case GradeUnknown:
+		return nil
+	case GradeS, GradeA, GradeB, GradeC, GradeD:
+	default:
+		return fmt.Errorf("invalid multiplayer grade: %q", grade)
 	}
 
-	if _, err = stmt.Exec(grade, grade, id); err != nil {
-		return fmt.Errorf("update message rating: %w", err)
+	query := fmt.Sprintf("UPDATE character SET %s = %s + 1 WHERE id = ?", grade, grade)
+	if _, err := s.db.Exec(query, id); err != nil {
+		return fmt.Errorf("update player grade: %w", err)
 	}
 
 	return nil
