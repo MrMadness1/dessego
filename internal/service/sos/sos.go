@@ -45,9 +45,6 @@ func (s SOS) Bytes() []byte {
 	data.WriteString(s.CharacterID)
 	data.WriteByte(0x00)
 
-	// Block ID.
-	binary.Write(data, binary.LittleEndian, uint32(s.BlockID))
-
 	// Positional data.
 	binary.Write(data, binary.LittleEndian, math.Float32bits(s.PosX))
 	binary.Write(data, binary.LittleEndian, math.Float32bits(s.PosY))

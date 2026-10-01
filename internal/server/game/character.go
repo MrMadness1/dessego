@@ -14,7 +14,7 @@ import (
 
 // swagger:operation POST /cgi-bin/initializeCharacter.spd initializeCharacter
 //
-// Initialises a new character and persists it for future reference
+// # Initialises a new character and persists it for future reference
 //
 // ---
 // summary: Initialises a new character
@@ -25,16 +25,18 @@ import (
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/initCharacterReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) initCharacterHandler() http.HandlerFunc {
 	// swagger:model initCharacterReq
 	type initCharacterReq struct {
@@ -99,7 +101,7 @@ func (s *Server) initCharacterHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/getQWCData.spd getQWCData
 //
-// Returns the currently stored world tendency data for a given character
+// # Returns the currently stored world tendency data for a given character
 //
 // ---
 // summary: Get world tendency
@@ -110,16 +112,18 @@ func (s *Server) initCharacterHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/worldTendencyReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) worldTendencyHandler() http.HandlerFunc {
 	// swagger:model worldTendencyReq
 	type worldTendencyReq struct {
@@ -155,20 +159,20 @@ func (s *Server) worldTendencyHandler() http.HandlerFunc {
 		s.l.Debug().Msgf("current average world tendency: %q", avg)
 
 		data := new(bytes.Buffer)
-		binary.Write(data, binary.LittleEndian, avg.WB1)
-		binary.Write(data, binary.LittleEndian, avg.LR1)
-		binary.Write(data, binary.LittleEndian, avg.WB2)
-		binary.Write(data, binary.LittleEndian, avg.LR2)
-		binary.Write(data, binary.LittleEndian, avg.WB3)
-		binary.Write(data, binary.LittleEndian, avg.LR3)
-		binary.Write(data, binary.LittleEndian, avg.WB4)
-		binary.Write(data, binary.LittleEndian, avg.LR4)
-		binary.Write(data, binary.LittleEndian, avg.WB5)
-		binary.Write(data, binary.LittleEndian, avg.LR5)
-		binary.Write(data, binary.LittleEndian, avg.WB6)
-		binary.Write(data, binary.LittleEndian, avg.LR6)
-		binary.Write(data, binary.LittleEndian, avg.WB7)
-		binary.Write(data, binary.LittleEndian, avg.LR7)
+		binary.Write(data, binary.LittleEndian, int32(avg.WB1))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR1))
+		binary.Write(data, binary.LittleEndian, int32(avg.WB2))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR2))
+		binary.Write(data, binary.LittleEndian, int32(avg.WB3))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR3))
+		binary.Write(data, binary.LittleEndian, int32(avg.WB4))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR4))
+		binary.Write(data, binary.LittleEndian, int32(avg.WB5))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR5))
+		binary.Write(data, binary.LittleEndian, int32(avg.WB6))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR6))
+		binary.Write(data, binary.LittleEndian, int32(avg.WB7))
+		binary.Write(data, binary.LittleEndian, int32(avg.LR7))
 
 		if err = transport.WriteResponse(
 			w, transport.ResponseCharacterTendency, data.Bytes(),
@@ -182,7 +186,7 @@ func (s *Server) worldTendencyHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/addWorldTendencyHandler.spd addWorldTendencyHandler
 //
-// Updates the currently stored world tendency data for a given character
+// # Updates the currently stored world tendency data for a given character
 //
 // ---
 // summary: Add world tendency
@@ -193,16 +197,18 @@ func (s *Server) worldTendencyHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/addWorldTendencyReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) addWorldTendencyHandler() http.HandlerFunc {
 	// swagger:model addWorldTendencyReq
 	type addWorldTendencyReq struct {
@@ -288,7 +294,7 @@ func (s *Server) addWorldTendencyHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/getMultiPlayGrade.spd getMultiPlayGrade
 //
-// Gets the current multiplayer grade for a character, used when matchmaking
+// # Gets the current multiplayer grade for a character, used when matchmaking
 //
 // ---
 // summary: Get multiplayer grade
@@ -299,16 +305,18 @@ func (s *Server) addWorldTendencyHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/multiplayerGradeReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) characterMPGradeHandler() http.HandlerFunc {
 	// swagger:model multiplayerGradeReq
 	type multiplayerGradeReq struct {
@@ -342,6 +350,7 @@ func (s *Server) characterMPGradeHandler() http.HandlerFunc {
 		s.l.Debug().Msgf("character %q stats %s", mgr.CharacterID, stats)
 
 		data := new(bytes.Buffer)
+		data.WriteByte(0x01)
 		for _, s := range stats.Vals() {
 			binary.Write(data, binary.LittleEndian, int32(s))
 		}
@@ -358,7 +367,7 @@ func (s *Server) characterMPGradeHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/getBloodMessageGrade.spd getBloodMessageGrade
 //
-// Gets the current blood message grade for a character
+// # Gets the current blood message grade for a character
 //
 // ---
 // summary: Get blood message grade
@@ -369,16 +378,18 @@ func (s *Server) characterMPGradeHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/bloodMsgGradeReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) characterBloodMsgGradeHandler() http.HandlerFunc {
 	// swagger:model bloodMsgGradeReq
 	type bloodMsgGradeReq struct {
@@ -412,6 +423,7 @@ func (s *Server) characterBloodMsgGradeHandler() http.HandlerFunc {
 		s.l.Debug().Msgf("character %q blood msg rating %d", bmr.CharacterID, mr)
 
 		data := new(bytes.Buffer)
+		data.WriteByte(0x01)
 		binary.Write(data, binary.LittleEndian, int32(mr))
 
 		if err = transport.WriteResponse(
