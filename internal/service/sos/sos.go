@@ -66,14 +66,14 @@ func (s SOS) Bytes() []byte {
 
 	// Ratings.
 	for _, r := range s.Ratings {
-		binary.Write(data, binary.LittleEndian, r)
+		binary.Write(data, binary.LittleEndian, uint32(r))
 	}
 
 	// TODO: Not sure what this is?
 	binary.Write(data, binary.LittleEndian, uint32(0))
 
 	// Total sessions.
-	binary.Write(data, binary.LittleEndian, s.TotalSessions)
+	binary.Write(data, binary.LittleEndian, uint32(s.TotalSessions))
 
 	// Player info.
 	data.WriteString(s.PlayerInfo)

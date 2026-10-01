@@ -31,6 +31,8 @@ type Manager struct {
 func NewManager(l zerolog.Logger) *Manager {
 	return &Manager{
 		active: make(map[string]*SOS),
+		pending: make(map[string]string),
+		monks: make(map[string]string),
 		l:      l,
 	}
 }

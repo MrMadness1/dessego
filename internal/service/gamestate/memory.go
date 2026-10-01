@@ -22,10 +22,7 @@ func NewMemory() *Memory {
 
 // Motd returns the messages of the day.
 func (m *Memory) Motd() []string {
-	motd := "Welcome to DeSSE Go\r\n"
-	motd += "A server emulator for Demon's Souls implemented in Go\r\n"
-	motd += "Source code:\r\n"
-	motd += "https://github.com/danmrichards/dessego\r\n"
+	motd := "Welcome to the MGN Demon's Souls Server!\r\n"
 
 	motd2 := "Current players online: " + strconv.Itoa(m.playerCount())
 
