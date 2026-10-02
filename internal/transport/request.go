@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"strings"
 
 	"github.com/danmrichards/dessego/internal/transport/encoding/form"
 )
@@ -30,8 +31,9 @@ func DecodeRequest(rd RequestDecrypter, data []byte, v interface{}) error {
 		return fmt.Errorf("decrypt request: %w", err)
 	}
 
-	// Can now use the body as a normal HTTP form.
-	vals, err := url.ParseQuery(string(req))
+	// Native PS3 clients can append unused bytes after Base64 padding. Strip
+	// those tails before the form parser interprets them as URL syntax.
+	vals, err := url.ParseQuery(trimBase64Tails(string(req)))
 	if err != nil {
 		return fmt.Errorf("parse request vals: %w", err)
 	}
@@ -41,4 +43,44 @@ func DecodeRequest(rd RequestDecrypter, data []byte, v interface{}) error {
 	}
 
 	return nil
+}
+
+// trimBase64Tails handles the two opaque Base64 fields used by the game.
+// The existing game Base64 decoder stops at padding; bytes after it are not
+// part of the payload. Do not relax URL parsing for ordinary fields or for
+// malformed data before padding.
+func trimBase64Tails(body string) string {
+	fields := strings.Split(body, "&")
+	for i, field := range fields {
+		parts := strings.SplitN(field, "=", 2)
+		if len(parts) != 2 || (parts[0] != "replayData" && parts[0] != "NPRoomID") {
+			continue
+		}
+		value := parts[1]
+		padding := strings.IndexByte(value, '=')
+		if padding < 0 {
+			continue
+		}
+		prefix, err := url.QueryUnescape(value[:padding])
+		if err != nil || prefix == "" {
+			continue
+		}
+		valid := true
+		for _, c := range prefix {
+			if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+				(c >= '0' && c <= '9') || c == '+' || c == '/' || c == ' ') {
+				valid = false
+				break
+			}
+		}
+		if !valid {
+			continue
+		}
+		end := padding
+		for end < len(value) && value[end] == '=' {
+			end++
+		}
+		fields[i] = parts[0] + "=" + value[:end]
+	}
+	return strings.Join(fields, "&")
 }
