@@ -359,6 +359,9 @@ func (s *SQLiteService) initTable() error {
 		return fmt.Errorf("init table: %w", err)
 	}
 
+	if _, err = s.db.Exec("CREATE INDEX IF NOT EXISTS message_block_legacy_character ON message (block_id, legacy, character_id)"); err != nil {
+		return fmt.Errorf("init index: %w", err)
+	}
 	return nil
 }
 

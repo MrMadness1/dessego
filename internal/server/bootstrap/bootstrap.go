@@ -25,8 +25,9 @@ type bootstrapData struct {
 // produces:
 // - text/plain
 // responses:
-//   '200':
-//     description: successful operation
+//
+//	'200':
+//	  description: successful operation
 func (s *Server) bootstrapHandler() http.HandlerFunc {
 	tpl := template.Must(template.ParseFiles("internal/server/bootstrap/res.tpl"))
 

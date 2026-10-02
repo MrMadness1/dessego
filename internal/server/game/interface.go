@@ -103,7 +103,7 @@ type Ghosts interface {
 // Replays is the interface that wraps methods that types must implement to be
 // used as a service for managing replays.
 type Replays interface {
-	// List returns n replays for the given block ID and legacy type.
+	// List returns replay headers without Data; Get retrieves the full payload.
 	List(blockID int32, n int, legacy replay.LegacyType) ([]replay.Replay, error)
 
 	// Get returns a given replay.

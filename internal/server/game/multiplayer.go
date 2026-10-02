@@ -58,7 +58,7 @@ func (u updateOtherPlayerGradeReq) Character() string {
 
 // swagger:operation POST /cgi-bin/outOfBlock.spd outOfBlockHandler
 //
-// Triggered when a player leaves an area of the game
+// # Triggered when a player leaves an area of the game
 //
 // ---
 // summary: Out of block
@@ -69,16 +69,18 @@ func (u updateOtherPlayerGradeReq) Character() string {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/outOfBlockReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) outOfBlockHandler() http.HandlerFunc {
 	// swagger:model outOfBlockReq
 	type outOfBlockReq struct {
@@ -116,7 +118,7 @@ func (s *Server) outOfBlockHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/initializeMultiPlay.spd initMultiplayHandler
 //
-// Initialise multiplayer for a given character
+// # Initialise multiplayer for a given character
 //
 // ---
 // summary: Initialise multiplayer
@@ -127,16 +129,18 @@ func (s *Server) outOfBlockHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/initMultiplayHandler"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) initMultiplayHandler() http.HandlerFunc {
 	// swagger:model initMultiplayHandler
 	type initMultiplayHandler struct {
@@ -192,16 +196,18 @@ func (s *Server) initMultiplayHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/finaliseMultiplayReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) finaliseMultiplayHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
@@ -243,7 +249,7 @@ func (s *Server) finaliseMultiplayHandler() http.HandlerFunc {
 
 // swagger:operation POST /cgi-bin/updateOtherPlayerGrade.spd updateOtherPlayerGradeHandler
 //
-// Sets the grade of a character after a multiplayer session
+// # Sets the grade of a character after a multiplayer session
 //
 // ---
 // summary: Update other character grade
@@ -254,16 +260,18 @@ func (s *Server) finaliseMultiplayHandler() http.HandlerFunc {
 // produces:
 // - text/plain
 // parameters:
-// - in: "body"
-//   name: "body"
-//   required: true
-//   schema:
+//   - in: "body"
+//     name: "body"
+//     required: true
+//     schema:
 //     "$ref": "#/definitions/updateOtherPlayerGradeReq"
+//
 // responses:
-//   '200':
-//     description: successful operation
-//   '500':
-//     description: unsuccessful operation
+//
+//	'200':
+//	  description: successful operation
+//	'500':
+//	  description: unsuccessful operation
 func (s *Server) updateOtherPlayerGradeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)

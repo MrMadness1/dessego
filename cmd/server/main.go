@@ -2,15 +2,15 @@
 //
 // The boostrap and game API endpoints for Demon's Souls
 //
-//     Schemes: http
-//	   Version: 1.0.0
-//     basePath: /
+//	    Schemes: http
+//		   Version: 1.0.0
+//	    basePath: /
 //
-//     Consumes:
-//     - text/plain
+//	    Consumes:
+//	    - text/plain
 //
-//     Produces:
-//     - text/plain
+//	    Produces:
+//	    - text/plain
 //
 // swagger:meta
 package main
@@ -55,6 +55,7 @@ var (
 	portJP        string
 	dbPath        string
 	seed          bool
+	buildRevision = "unknown"
 )
 
 func main() {
@@ -67,7 +68,8 @@ func main() {
 	flag.StringVar(&dbPath, "db", envOrDefault("DESSEGO_DB_PATH", defaultDBPath), "SQLite database path")
 	flag.Parse()
 
-	l := zerolog.New(os.Stdout)
+	l := zerolog.New(os.Stdout).With().Timestamp().Logger()
+	l.Info().Str("revision", buildRevision).Msg("starting server")
 	gameServers := map[string]string{
 		"US": portUS,
 		"EU": portEU,
@@ -87,7 +89,7 @@ func main() {
 	// Bootstrap server; used to allow Demon's Souls to configure it's network
 	// client.
 	var bs *bootstrap.Server
-	bs, err = bootstrap.NewServer(portBootstrap, hostGame, gameServers, l)
+	bs, err = bootstrap.NewServer(portBootstrap, hostGame, gameServers, l.With().Str("region", "bootstrap").Logger())
 	if err != nil {
 		fatal(l, err)
 	}
@@ -140,7 +142,7 @@ func main() {
 			ghost.NewMemory(l),
 			rs,
 			sos.NewManager(l),
-			l,
+			l.With().Str("region", region).Logger(),
 		)
 		if err != nil {
 			fatal(l, err)

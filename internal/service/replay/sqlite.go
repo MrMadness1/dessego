@@ -53,13 +53,15 @@ func NewSQLiteService(db *sql.DB, l zerolog.Logger, opts ...Option) (*SQLiteServ
 	return s, nil
 }
 
-// List returns n replays for the given block ID and legacy type.
+// List returns up to n replay headers for the given block and legacy type.
+// Data is omitted; Get retrieves the complete replay payload.
 func (s *SQLiteService) List(blockID int32, n int, legacy LegacyType) (rs []Replay, err error) {
 	rs = make([]Replay, 0, n)
 
 	var stmt *sql.Stmt
 	stmt, err = s.db.Prepare(
-		`SELECT *
+		`SELECT id, character_id, block_id, posx, posy, posz,
+		angx, angy, angz, msg_id, main_msg_id, add_msg_cate_id, legacy
 		FROM replay 
 		WHERE block_id = ?
 		AND legacy = ?
@@ -93,7 +95,6 @@ func (s *SQLiteService) List(blockID int32, n int, legacy LegacyType) (rs []Repl
 			&r.MsgID,
 			&r.MainMsgID,
 			&r.AddMsgCateID,
-			&r.Data,
 			&r.Legacy,
 		); err != nil {
 			return nil, fmt.Errorf("scan row: %w", err)
@@ -179,6 +180,9 @@ func (s *SQLiteService) initTable() error {
 		return fmt.Errorf("init table: %w", err)
 	}
 
+	if _, err = s.db.Exec("CREATE INDEX IF NOT EXISTS replay_block_legacy ON replay (block_id, legacy)"); err != nil {
+		return fmt.Errorf("init index: %w", err)
+	}
 	return nil
 }
 

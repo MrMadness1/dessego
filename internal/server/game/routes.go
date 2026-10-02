@@ -9,19 +9,15 @@ import (
 const routePrefix = "/cgi-bin"
 
 func (s *Server) routes() {
-	s.r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		s.l.Warn().
-			Str("method", r.Method).
-			Str("path", r.URL.Path).
-			Str("client", r.RemoteAddr).
-			Msg("")
-
-		// Throw a panic here as a 404 or any other form of the server accepting
-		// the request will not cause Demon's Souls to treat the request as
-		// failed. Need the request to be treated as failed to ensure it moves
-		// on to the next one.
-		panic("unhandled request")
-	})
+	s.r.HandleFunc("/", middleware.LogRequest(s.l, middleware.DiscardRequestBody(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Native fallback requires an aborted unknown POST, not an accepted
+		// HTTP error response. ErrAbortHandler preserves this without a stack trace.
+		if r.Method == http.MethodPost {
+			s.l.Warn().Str("path", r.URL.Path).Msg("unsupported native request")
+			panic(http.ErrAbortHandler)
+		}
+		http.NotFound(w, r)
+	}))))
 
 	// System routes.
 	s.r.HandleFunc(

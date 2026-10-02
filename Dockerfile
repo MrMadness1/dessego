@@ -1,5 +1,7 @@
 FROM golang:1.24-bookworm AS build
 
+ARG BUILD_REVISION=unknown
+
 WORKDIR /src
 COPY go.mod go.sum ./
 COPY vendor ./vendor
@@ -8,11 +10,14 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build \
     -mod=vendor \
     -trimpath \
-    -ldflags="-s -w" \
+    -ldflags="-s -w -X main.buildRevision=${BUILD_REVISION}" \
     -o /out/dessego \
     ./cmd/server
 
 FROM debian:bookworm-slim
+
+ARG BUILD_REVISION=unknown
+LABEL org.opencontainers.image.revision=${BUILD_REVISION}
 
 RUN groupadd --system --gid 10001 dessego \
     && useradd --system --uid 10001 --gid 10001 --home-dir /app dessego \
